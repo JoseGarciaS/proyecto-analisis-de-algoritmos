@@ -7,7 +7,7 @@ int main() {
     double capacity = 50.0;
 
     double maxValue = fractionalKnapsack(capacity, items);
-    std::cout << "Valor máximo en mochila = " << maxValue << std::endl;
+    std::cout << "Valor maximo en mochila = " << maxValue << std::endl;
 
     return 0;
 }
