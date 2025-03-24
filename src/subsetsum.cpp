@@ -1,7 +1,8 @@
 #include <iostream>
 #include <vector>
 
-bool isSubsetSum(const std::vector<int>& set, int sum) {
+std::vector<std::vector<bool>> SubsetSum(const std::vector<int> &set, int sum)
+{
     int n = set.size();
     std::vector<std::vector<bool>> subset(n + 1, std::vector<bool>(sum + 1));
 
@@ -14,8 +15,10 @@ bool isSubsetSum(const std::vector<int>& set, int sum) {
         subset[0][j] = false;
 
     // Llenar tabla
-    for (int i = 1; i <= n; ++i) {
-        for (int j = 1; j <= sum; ++j) {
+    for (int i = 1; i <= n; ++i)
+    {
+        for (int j = 1; j <= sum; ++j)
+        {
             if (j < set[i - 1])
                 subset[i][j] = subset[i - 1][j];
             else
@@ -23,5 +26,5 @@ bool isSubsetSum(const std::vector<int>& set, int sum) {
         }
     }
 
-    return subset[n][sum];
+    return subset;
 }

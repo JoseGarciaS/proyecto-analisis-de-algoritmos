@@ -29,6 +29,7 @@ static ID3D11RenderTargetView *g_mainRenderTargetView = nullptr;
 #include <vector>
 #include <string>
 #include "imageData.h"
+#include <iostream>
 
 std::unordered_map<std::string, ImageData> loadedImages;
 
@@ -155,19 +156,51 @@ int main(int, char **)
     // - Read 'docs/FONTS.md' for more instructions and details.
     // - Remember that in C/C++ if you want to include a backslash \ in a string literal you need to write a double backslash \\ !
     // io.Fonts->AddFontDefault();
-    // io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\segoeui.ttf", 18.0f);
+    io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\segoeui.ttf", 20.0f);
     // io.Fonts->AddFontFromFileTTF("../../misc/fonts/DroidSans.ttf", 16.0f);
     // io.Fonts->AddFontFromFileTTF("../../misc/fonts/Roboto-Medium.ttf", 16.0f);
     // io.Fonts->AddFontFromFileTTF("../../misc/fonts/Cousine-Regular.ttf", 15.0f);
     // ImFont* font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf", 18.0f, nullptr, io.Fonts->GetGlyphRangesJapanese());
     // IM_ASSERT(font != nullptr);
 
+    ImFont *h1Font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\segoeuii.ttf", 30.0f);
+    if (!h1Font)
+    {
+        std::cerr << "Failed to load h1 font (Segoe UI, size 30)" << std::endl;
+        return 1;
+    }
+
+    io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\segoeuib.ttf", 20.0f);
+
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
     // === Load images
     std::vector<std::string> imageNames = {
-        "background.png",
-    };
+        "Background.png",
+        "Books.png",
+        "BooksGlow.png",
+        "Camera.png",
+        "CameraGlow.png",
+        "Clock.png",
+        "ClockGlow.png",
+        "Lamp.png",
+        "LampGlow.png",
+        "LargeSofa.png",
+        "LargeSofaGlow.png",
+        "MediumSofa.png",
+        "MediumSofaGlow.png",
+        "Painting.png",
+        "PaintingGlow.png",
+        "Plant1.png",
+        "Plant1Glow.png",
+        "SmallPlant.png",
+        "SmallPlantGlow.png",
+        "Speakers.png",
+        "SpeakersGlow.png",
+        "Tablet.png",
+        "TabletGlow.png",
+        "TV.png",
+        "TVGlow.png"};
 
     for (const auto &name : imageNames)
     {
@@ -177,7 +210,7 @@ int main(int, char **)
         if (ret)
         {
             loadedImages[name] = img; // Add the loaded image to the vector
-            printf("Loaded image: %s (Width: %d, Height: %d)\n", path.c_str(), img.width, img.height);
+            // printf("Loaded image: %s (Width: %d, Height: %d)\n", path.c_str(), img.width, img.height);
         }
         else
         {

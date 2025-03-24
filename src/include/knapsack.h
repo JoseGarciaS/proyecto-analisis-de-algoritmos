@@ -1,18 +1,21 @@
+
 #ifndef KNAPSACK_H
 #define KNAPSACK_H
 
 #include <iostream>
 #include <vector>
 #include <algorithm>
+#include <string>
 
 struct Item
 {
-    double value;
-    double weight;
+    std::string name;
+    int value;
+    int weight;
+    bool stealable = false;
+    bool stolen = false;
 };
 
-bool compare(Item a, Item b);
-
-double fractionalKnapsack(double capacity, std::vector<Item> items);
+std::vector<std::vector<int>> knapsack01(int capacity, std::vector<Item *> items);
 
 #endif // KNAPSACK_H

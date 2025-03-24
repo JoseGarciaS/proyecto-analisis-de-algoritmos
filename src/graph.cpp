@@ -110,8 +110,6 @@ void Graph::greedyColoring()
 
 void Graph::resetGraph()
 {
-    for (auto &[id, node] : adjacencyList)
-    {
-        node.setColor("White", ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
-    }
+    adjacencyList.clear();
+    idCount = 0;
 }
