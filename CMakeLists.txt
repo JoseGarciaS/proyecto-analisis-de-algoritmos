@@ -16,3 +16,6 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
     d3dcompiler 
     dwmapi
 )
+
+
+file(COPY ${CMAKE_SOURCE_DIR}/assets DESTINATION ${CMAKE_BINARY_DIR})

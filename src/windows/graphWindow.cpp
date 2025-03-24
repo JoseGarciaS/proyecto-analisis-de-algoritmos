@@ -64,46 +64,78 @@ namespace graphWindow
 
     void Render()
     {
+        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 0.0f, 0.0f, 1.0f)); // Set text color to black
 
-        ImVec2 displaySize = ImGui::GetIO().DisplaySize;
-        ImGui::SetNextWindowSize(displaySize);
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(1.0f, 1.0f, 1.0f, 1.0f)); // RGBA: White
 
         ImGui::Begin("graph", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
 
+        ImGui::PushFont(ImGui::GetIO().Fonts->Fonts[1]);
+        ImGui::Text("Graph Coloring");
+        ImGui::PopFont();
+
+        ImGui::Spacing();
+
+        auto buttonStyle = [](bool isActive)
+        {
+            if (isActive)
+            {
+                ImGui::PushStyleColor(ImGuiCol_Button, ImGui::GetStyleColorVec4(ImGuiCol_ButtonHovered)); // Default ImGui hovered color
+            }
+            else
+            {
+                ImGui::PushStyleColor(ImGuiCol_Button, ImGui::GetStyleColorVec4(ImGuiCol_Button)); // Default ImGui color
+            }
+        };
+
+        buttonStyle(currentState == State::MovingNode);
         if (ImGui::Button("Move Node"))
         {
             resetSelection();
             currentState = State::MovingNode;
             selectionMode = Selection::Single;
         }
+        ImGui::PopStyleColor();
 
+        buttonStyle(currentState == State::DeletingNode);
         if (ImGui::Button("Remove Node"))
         {
             resetSelection();
             currentState = State::DeletingNode;
             selectionMode = Selection::Single;
         }
+        ImGui::PopStyleColor();
 
+        buttonStyle(currentState == State::AddingEdge);
         if (ImGui::Button("Add Edge"))
         {
             resetSelection();
             currentState = State::AddingEdge;
             selectionMode = Selection::Pair;
         }
+        ImGui::PopStyleColor();
 
-        if (ImGui::Button("Run Algorithm"))
+        buttonStyle(currentState == State::RunningAlgorithm);
+        if (ImGui::Button("Color Graph"))
         {
             currentState = State::RunningAlgorithm;
-            graph.greedyColoring();
-        }
 
+            if (!graph.getAdjacencyList().empty())
+            {
+                graph.greedyColoring();
+            }
+        }
+        ImGui::PopStyleColor();
+
+        buttonStyle(false); // Reset button is not state-dependent
         if (ImGui::Button("Reset"))
         {
+            graph.resetGraph();
             currentState = State::MovingNode;
-            graph.greedyColoring();
         }
+        ImGui::PopStyleColor();
 
+        buttonStyle(false); // Add Node button is not state-dependent
         if (ImGui::Button("Add Node"))
         {
             graph.addNode();
@@ -111,6 +143,7 @@ namespace graphWindow
             currentState = State::MovingNode;
             selectedNode1 = graph.getIdCount();
         }
+        ImGui::PopStyleColor();
 
         static ImVec2 buttonSize = ImVec2(80, 80);
 
@@ -138,13 +171,22 @@ namespace graphWindow
         ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.0f);                      // Border size
         ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.9f, 0.9f, 0.9f, 1.0f)); // Slightly darker when hovered
         ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.8f, 0.8f, 0.8f, 1.0f));  // Even darker when clicked
-        ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.0f, 0.0f, 0.0f, 1.0f));        // Black border
-        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 0.0f, 0.0f, 1.0f));
 
         // Render nodes
         for (auto &[id, node] : adjacencyList)
         {
             ImGui::PushStyleColor(ImGuiCol_Button, node.getColor().second); // White background
+
+            // Set border color: green for selected nodes, black otherwise
+            if (id == selectedNode1 || id == selectedNode2)
+            {
+                ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.0f, 1.0f, 0.0f, 1.0f)); // Green border
+            }
+            else
+            {
+                ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.0f, 0.0f, 0.0f, 1.0f)); // Black border
+            }
+
             std::string buttonLabel = to_string(id);
             ImGui::SetCursorScreenPos(node.getPosition());
 
@@ -167,13 +209,13 @@ namespace graphWindow
                 }
             }
 
-            ImGui::PopStyleColor();
+            ImGui::PopStyleColor(2); // Pop border and button colors
 
             ImGui::Spacing();
         }
 
         // Restore styles
-        ImGui::PopStyleColor(4); // Pop all 4 colors
+        ImGui::PopStyleColor(2); // Pop hovered, active, and default button colors
         ImGui::PopStyleVar(2);
 
         switch (currentState)
@@ -205,7 +247,7 @@ namespace graphWindow
         }
 
         // Pop the white background color
-        ImGui::PopStyleColor();
+        ImGui::PopStyleColor(2);
         ImGui::End();
     }
 }

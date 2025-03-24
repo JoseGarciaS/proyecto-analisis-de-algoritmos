@@ -11,3 +11,7 @@ target_include_directories(imgui PUBLIC
     imgui/include
     imgui/backends/include
 )
+
+target_include_directories(imgui PUBLIC 
+    stb/include
+)
