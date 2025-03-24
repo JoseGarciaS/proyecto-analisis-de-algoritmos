@@ -1,6 +1,7 @@
 #include "app.h"
 #include "imgui.h"
 #include "windowRenderer.h"
+#include <unordered_map>
 #include <iostream>
 
 static void mainMenuBar()
@@ -31,16 +32,17 @@ static void mainMenuBar()
 
 namespace app
 {
-    void RenderWindows()
+    static bool isInitialized = false;
+
+    void RenderWindows(std::unordered_map<std::string, ImageData> &loadedImages)
     {
         mainMenuBar();
         ImGui::SetNextWindowPos(ImVec2(0, ImGui::GetFrameHeight() + 1));
-        // ImGui::ShowDemoWindow();
+        ImGui::SetNextWindowSize(ImGui::GetIO().DisplaySize);
+        ImGui::ShowDemoWindow();
         // templateWindow::Render();
-        graphWindow::Render();
+        // graphWindow::Render();
+        knapsackWindow::Render(loadedImages);
+        // subsetsumWindow::Render();
     }
 }
-
-// metodo maestro
-// algoritmos greedy
-//      analizarlo y ver como funciona

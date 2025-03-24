@@ -65,8 +65,6 @@ namespace graphWindow
     void Render()
     {
 
-        ImVec2 displaySize = ImGui::GetIO().DisplaySize;
-        ImGui::SetNextWindowSize(displaySize);
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(1.0f, 1.0f, 1.0f, 1.0f)); // RGBA: White
 
         ImGui::Begin("graph", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);

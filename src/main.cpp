@@ -13,6 +13,10 @@
 #include <d3d11.h>
 #include <tchar.h>
 
+#define _CRT_SECURE_NO_WARNINGS
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+
 // Data
 static ID3D11Device *g_pd3dDevice = nullptr;
 static ID3D11DeviceContext *g_pd3dDeviceContext = nullptr;
@@ -20,6 +24,79 @@ static IDXGISwapChain *g_pSwapChain = nullptr;
 static bool g_SwapChainOccluded = false;
 static UINT g_ResizeWidth = 0, g_ResizeHeight = 0;
 static ID3D11RenderTargetView *g_mainRenderTargetView = nullptr;
+
+#include <unordered_map>
+#include <vector>
+#include <string>
+#include "imageData.h"
+
+std::unordered_map<std::string, ImageData> loadedImages;
+
+// Simple helper function to load an image into a DX11 texture with common settings
+bool LoadTextureFromMemory(const void *data, size_t data_size, ID3D11ShaderResourceView **out_srv, int *out_width, int *out_height)
+{
+    // Load from disk into a raw RGBA buffer
+    int image_width = 0;
+    int image_height = 0;
+    unsigned char *image_data = stbi_load_from_memory((const unsigned char *)data, (int)data_size, &image_width, &image_height, NULL, 4);
+    if (image_data == NULL)
+        return false;
+
+    // Create texture
+    D3D11_TEXTURE2D_DESC desc;
+    ZeroMemory(&desc, sizeof(desc));
+    desc.Width = image_width;
+    desc.Height = image_height;
+    desc.MipLevels = 1;
+    desc.ArraySize = 1;
+    desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    desc.SampleDesc.Count = 1;
+    desc.Usage = D3D11_USAGE_DEFAULT;
+    desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+    desc.CPUAccessFlags = 0;
+
+    ID3D11Texture2D *pTexture = NULL;
+    D3D11_SUBRESOURCE_DATA subResource;
+    subResource.pSysMem = image_data;
+    subResource.SysMemPitch = desc.Width * 4;
+    subResource.SysMemSlicePitch = 0;
+    g_pd3dDevice->CreateTexture2D(&desc, &subResource, &pTexture);
+
+    // Create texture view
+    D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
+    ZeroMemory(&srvDesc, sizeof(srvDesc));
+    srvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+    srvDesc.Texture2D.MipLevels = desc.MipLevels;
+    srvDesc.Texture2D.MostDetailedMip = 0;
+    g_pd3dDevice->CreateShaderResourceView(pTexture, &srvDesc, out_srv);
+    pTexture->Release();
+
+    *out_width = image_width;
+    *out_height = image_height;
+    stbi_image_free(image_data);
+
+    return true;
+}
+
+// Open and read a file, then forward to LoadTextureFromMemory()
+bool LoadTextureFromFile(const char *file_name, ID3D11ShaderResourceView **out_srv, int *out_width, int *out_height)
+{
+    FILE *f = fopen(file_name, "rb");
+    if (f == NULL)
+        return false;
+    fseek(f, 0, SEEK_END);
+    size_t file_size = (size_t)ftell(f);
+    if (file_size == -1)
+        return false;
+    fseek(f, 0, SEEK_SET);
+    void *file_data = IM_ALLOC(file_size);
+    fread(file_data, 1, file_size, f);
+    fclose(f);
+    bool ret = LoadTextureFromMemory(file_data, file_size, out_srv, out_width, out_height);
+    IM_FREE(file_data);
+    return ret;
+}
 
 // Forward declarations of helper functions
 bool CreateDeviceD3D(HWND hWnd);
@@ -35,7 +112,11 @@ int main(int, char **)
     // ImGui_ImplWin32_EnableDpiAwareness();
     WNDCLASSEXW wc = {sizeof(wc), CS_CLASSDC, WndProc, 0L, 0L, GetModuleHandle(nullptr), nullptr, nullptr, nullptr, nullptr, L"ImGui Example", nullptr};
     ::RegisterClassExW(&wc);
-    HWND hwnd = ::CreateWindowW(wc.lpszClassName, L"Dear ImGui DirectX11 Example", WS_OVERLAPPEDWINDOW, 100, 100, 1280, 800, nullptr, nullptr, wc.hInstance, nullptr);
+    HWND hwnd = ::CreateWindowW(
+        wc.lpszClassName,
+        L"Algorithms", WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX, // Fixed-size window style
+        100, 100, 1280, 800,                                                     // Position (100, 100) and size (1280x800)
+        nullptr, nullptr, wc.hInstance, nullptr);
 
     // Initialize Direct3D
     if (!CreateDeviceD3D(hwnd))
@@ -83,6 +164,27 @@ int main(int, char **)
 
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
+    // === Load images
+    std::vector<std::string> imageNames = {
+        "background.png",
+    };
+
+    for (const auto &name : imageNames)
+    {
+        ImageData img;
+        std::string path = "../assets/images/" + name;
+        bool ret = LoadTextureFromFile(path.c_str(), &img.texture, &img.width, &img.height);
+        if (ret)
+        {
+            loadedImages[name] = img; // Add the loaded image to the vector
+            printf("Loaded image: %s (Width: %d, Height: %d)\n", path.c_str(), img.width, img.height);
+        }
+        else
+        {
+            printf("Failed to load image: %s\n", path.c_str());
+        }
+    }
+
     // Main loop
     bool done = false;
     while (!done)
@@ -123,7 +225,7 @@ int main(int, char **)
         ImGui::NewFrame();
 
         // === App ===
-        app::RenderWindows();
+        app::RenderWindows(loadedImages);
 
         // Rendering
         ImGui::Render();
@@ -146,6 +248,15 @@ int main(int, char **)
     CleanupDeviceD3D();
     ::DestroyWindow(hwnd);
     ::UnregisterClassW(wc.lpszClassName, wc.hInstance);
+
+    for (auto &[name, img] : loadedImages)
+    {
+        if (img.texture)
+        {
+            img.texture->Release();
+        }
+    }
+    loadedImages.clear();
 
     return 0;
 }
